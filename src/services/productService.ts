@@ -4,6 +4,10 @@ const PRODUCTS_URL =
   process.env.NEXT_PUBLIC_PRODUCTS_URL ||
   "http://127.0.0.1:8000/api/products/";
 
+// =========================
+// Get Categories
+// =========================
+
 export const getCategories = async (): Promise<Category[]> => {
   const response = await fetch(
     `${PRODUCTS_URL.replace(/\/$/, "")}/categories/`
@@ -16,14 +20,31 @@ export const getCategories = async (): Promise<Category[]> => {
   return response.json();
 };
 
-export const getProducts = async (
-  categoryId?: number | null
-): Promise<Product[]> => {
-  let url = PRODUCTS_URL;
+// =========================
+// Get Products
+// =========================
 
+export const getProducts = async (
+  categoryId?: number | null,
+  searchQuery?: string
+): Promise<Product[]> => {
+  const params = new URLSearchParams();
+
+  // Filter by category
   if (categoryId !== null && categoryId !== undefined) {
-    url = `${PRODUCTS_URL}?category=${categoryId}`;
+    params.append("category", categoryId.toString());
   }
+
+  // Search by product name
+  if (searchQuery && searchQuery.trim() !== "") {
+    params.append("search", searchQuery.trim());
+  }
+
+  const queryString = params.toString();
+
+  const url = queryString
+    ? `${PRODUCTS_URL}?${queryString}`
+    : PRODUCTS_URL;
 
   const response = await fetch(url);
 

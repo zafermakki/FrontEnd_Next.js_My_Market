@@ -12,27 +12,48 @@ import { getCategories, getProducts } from "@/services/productService";
 import type { Category, Product } from "@/types/product";
 
 const Dashboard = () => {
+  // =========================
   // Categories
+  // =========================
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [categoriesError, setCategoriesError] = useState("");
 
+  // =========================
   // Products
+  // =========================
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState("");
 
-  // Selected category
+  // =========================
+  // Selected Category
+  // =========================
+
   const [selectedCategory, setSelectedCategory] = useState<number | null>(
     null
   );
 
-  // Selected product
+  // =========================
+  // Search
+  // =========================
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // =========================
+  // Selected Product
+  // =========================
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(
     null
   );
 
-  // Selected image inside modal
+  // =========================
+  // Selected Image
+  // =========================
+
   const [selectedImage, setSelectedImage] = useState(0);
 
   // =========================
@@ -49,7 +70,7 @@ const Dashboard = () => {
 
         setCategories(data);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching categories:", error);
         setCategoriesError("Unable to load categories.");
       } finally {
         setLoadingCategories(false);
@@ -69,11 +90,14 @@ const Dashboard = () => {
         setLoadingProducts(true);
         setProductsError("");
 
-        const data = await getProducts(selectedCategory);
+        const data = await getProducts(
+          selectedCategory,
+          searchQuery
+        );
 
         setProducts(data);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching products:", error);
         setProductsError("Unable to load products.");
       } finally {
         setLoadingProducts(false);
@@ -81,7 +105,7 @@ const Dashboard = () => {
     };
 
     fetchProducts();
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery]);
 
   // =========================
   // Product Modal
@@ -97,13 +121,32 @@ const Dashboard = () => {
     setSelectedImage(0);
   };
 
+  // =========================
+  // Search
+  // =========================
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+  };
+
+  // =========================
+  // Category Selection
+  // =========================
+
+  const handleCategorySelect = (categoryId: number | null) => {
+    setSelectedCategory(categoryId);
+  };
+
   return (
     <main className="min-h-screen bg-slate-50">
       {/* Navbar */}
 
-      <MarketplaceNavbar />
+      <MarketplaceNavbar
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+      />
 
-      {/* Main */}
+      {/* Main Content */}
 
       <section className="mx-auto max-w-7xl px-6 py-10">
         {/* Heading */}
@@ -129,7 +172,7 @@ const Dashboard = () => {
           selectedCategory={selectedCategory}
           loading={loadingCategories}
           error={categoriesError}
-          onSelectCategory={setSelectedCategory}
+          onSelectCategory={handleCategorySelect}
         />
 
         {/* Products */}
@@ -142,7 +185,7 @@ const Dashboard = () => {
         />
       </section>
 
-      {/* Product Details */}
+      {/* Product Details Modal */}
 
       <ProductDetailsModal
         product={selectedProduct}

@@ -1,6 +1,16 @@
+"use client";
+
 import { Search, ShoppingCart } from "lucide-react";
 
-const MarketplaceNavbar = () => {
+type MarketplaceNavbarProps = {
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+};
+
+const MarketplaceNavbar = ({
+  searchQuery,
+  onSearchChange,
+}: MarketplaceNavbarProps) => {
   return (
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -15,7 +25,7 @@ const MarketplaceNavbar = () => {
           </p>
         </div>
 
-        {/* Search */}
+        {/* Desktop Search */}
         <div className="hidden w-full max-w-md md:block">
           <div className="relative">
             <Search
@@ -25,6 +35,8 @@ const MarketplaceNavbar = () => {
 
             <input
               type="text"
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
               placeholder="Search products..."
               className="w-full rounded-2xl border border-slate-300 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white"
             />
@@ -54,6 +66,8 @@ const MarketplaceNavbar = () => {
 
           <input
             type="text"
+            value={searchQuery}
+            onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search products..."
             className="w-full rounded-2xl border border-slate-300 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-900 outline-none focus:border-slate-900"
           />
