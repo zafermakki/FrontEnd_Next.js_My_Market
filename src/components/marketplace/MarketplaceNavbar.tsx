@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Search, ShoppingCart } from "lucide-react";
 
 type MarketplaceNavbarProps = {
@@ -11,6 +12,13 @@ const MarketplaceNavbar = ({
   searchQuery,
   onSearchChange,
 }: MarketplaceNavbarProps) => {
+
+const router = useRouter();
+
+const handleCartClick = () => {
+    router.push("/mycart");
+};
+
   return (
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
@@ -46,7 +54,9 @@ const MarketplaceNavbar = ({
         {/* Cart */}
         <button
           type="button"
+          onClick={handleCartClick}
           className="relative rounded-2xl border border-slate-200 p-3 text-slate-700 transition hover:bg-slate-100"
+          aria-label="Go to cart"
         >
           <ShoppingCart size={21} />
 

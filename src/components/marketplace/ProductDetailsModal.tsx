@@ -1,5 +1,10 @@
 import { X } from "lucide-react";
 import type { Product } from "@/types/product";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+
+import { addToCart } from "@/store/features/cart/cartSlice";
+import { addProductToCart } from "@/services/cartService";
 
 type ProductDetailsModalProps = {
   product: Product | null;
@@ -14,11 +19,60 @@ const ProductDetailsModal = ({
   onSelectImage,
   onClose,
 }: ProductDetailsModalProps) => {
+  const dispatch = useDispatch();
+
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartError, setCartError] = useState("");
+
+  const handleAddToCart = async () => {
+    if (!product) {
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      setCartError("");
+
+      const cartItem = await addProductToCart(
+        product.id,
+        1
+      );
+
+      dispatch(
+        addToCart({
+          id: cartItem.id,
+          productId: cartItem.product.id,
+          name: cartItem.product.name,
+          price: cartItem.product.price,
+          image:
+            cartItem.product.images &&
+            cartItem.product.images.length > 0
+              ? cartItem.product.images[0].image
+              : null,
+          quantity: cartItem.quantity,
+        })
+      );
+    } catch (error) {
+      console.error(
+        "Error adding product to cart:",
+        error
+      );
+
+      setCartError(
+        error instanceof Error
+          ? error.message
+          : "Failed to add product to cart."
+      );
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
   if (!product) {
     return null;
   }
 
-  return (
+   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
@@ -41,7 +95,8 @@ const ProductDetailsModal = ({
           {/* Images */}
           <div className="p-6 lg:p-8">
             <div className="h-[350px] overflow-hidden rounded-2xl bg-slate-100 sm:h-[450px]">
-              {product.images && product.images.length > 0 ? (
+              {product.images &&
+              product.images.length > 0 ? (
                 <img
                   src={product.images[selectedImage]?.image}
                   alt={product.name}
@@ -54,28 +109,35 @@ const ProductDetailsModal = ({
               )}
             </div>
 
-            {product.images && product.images.length > 0 && (
-              <div className="mt-4 grid grid-cols-4 gap-3">
-                {product.images.slice(0, 4).map((image, index) => (
-                  <button
-                    key={image.id}
-                    type="button"
-                    onClick={() => onSelectImage(index)}
-                    className={`h-20 overflow-hidden rounded-xl border-2 bg-slate-100 transition sm:h-24 ${
-                      selectedImage === index
-                        ? "border-slate-900"
-                        : "border-transparent hover:border-slate-300"
-                    }`}
-                  >
-                    <img
-                      src={image.image}
-                      alt={`${product.name} ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+            {product.images &&
+              product.images.length > 0 && (
+                <div className="mt-4 grid grid-cols-4 gap-3">
+                  {product.images
+                    .slice(0, 4)
+                    .map((image, index) => (
+                      <button
+                        key={image.id}
+                        type="button"
+                        onClick={() =>
+                          onSelectImage(index)
+                        }
+                        className={`h-20 overflow-hidden rounded-xl border-2 bg-slate-100 transition sm:h-24 ${
+                          selectedImage === index
+                            ? "border-slate-900"
+                            : "border-transparent hover:border-slate-300"
+                        }`}
+                      >
+                        <img
+                          src={image.image}
+                          alt={`${product.name} ${
+                            index + 1
+                          }`}
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    ))}
+                </div>
+              )}
           </div>
 
           {/* Details */}
@@ -101,7 +163,8 @@ const ProductDetailsModal = ({
               </h3>
 
               <p className="mt-2 leading-7 text-slate-600">
-                {product.description || "No description available."}
+                {product.description ||
+                  "No description available."}
               </p>
             </div>
 
@@ -112,7 +175,8 @@ const ProductDetailsModal = ({
               </h3>
 
               <p className="mt-2 leading-7 text-slate-600">
-                {product.notes || "No notes available."}
+                {product.notes ||
+                  "No notes available."}
               </p>
             </div>
 
@@ -157,16 +221,22 @@ const ProductDetailsModal = ({
 
             <div className="mt-5 text-xs text-slate-400">
               Added on{" "}
-              {new Date(product.created_at).toLocaleDateString()}
+              {new Date(
+                product.created_at
+              ).toLocaleDateString()}
             </div>
 
             {/* Actions */}
             <div className="mt-8 flex gap-3">
               <button
                 type="button"
-                className="flex-1 rounded-xl bg-slate-900 px-5 py-3 font-medium text-white transition hover:bg-slate-800"
+                onClick={handleAddToCart}
+                disabled={addingToCart}
+                className="flex-1 rounded-xl bg-slate-900 px-5 py-3 font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Add to cart
+                {addingToCart
+                  ? "Adding..."
+                  : "Add to cart"}
               </button>
 
               <button
@@ -177,6 +247,13 @@ const ProductDetailsModal = ({
                 Close
               </button>
             </div>
+
+            {/* Cart Error */}
+            {cartError && (
+              <p className="mt-3 text-sm text-red-600">
+                {cartError}
+              </p>
+            )}
           </div>
         </div>
       </div>
