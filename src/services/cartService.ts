@@ -82,3 +82,77 @@ export const addProductToCart = async (
 
   return data;
 };
+
+export const updateCartItemQuantity = async (
+  itemId: number,
+  quantity: number
+  ): Promise<CartItemResponse> => {
+  const accessToken = localStorage.getItem("access_token");
+
+  if (!accessToken) {
+  throw new Error("You must be logged in to update your cart.");
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+  throw new Error("Quantity must be at least 1.");
+  }
+
+  const response = await fetch(
+  `${CART_URL}/items/update/${itemId}/`,
+  {
+  method: "PATCH",
+  headers: {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${accessToken}`,
+  },
+  body: JSON.stringify({ quantity }),
+  }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+  throw new Error(
+  data.detail ||
+  data.error ||
+  "Failed to update cart item quantity."
+  );
+  }
+
+  return data;
+};
+
+export const deleteCartItem = async (
+  itemId: number
+  ): Promise<void> => {
+      const accessToken = localStorage.getItem("access_token");
+
+  if (!accessToken) {
+      throw new Error("You must be logged in to remove items from your cart.");
+  }
+
+      const response = await fetch(
+      `${CART_URL}/items/delete/${itemId}/`,
+    {
+      method: "DELETE",
+      headers: {
+      Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+    if (!response.ok) {
+    let message = "Failed to remove item from cart.";
+
+
+  try {
+    const data = await response.json();
+    message = data.detail || data.error || message;
+  } catch {
+    // DELETE responses may have an empty body.
+  }
+
+    throw new Error(message);
+  }
+};
+

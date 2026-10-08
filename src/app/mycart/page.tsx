@@ -10,9 +10,15 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 
+import { getCart } from "@/services/cartService";
+import { updateCartItemQuantity } from "@/services/cartService";
+import { deleteCartItem } from "@/services/cartService";
+
+import { updateQuantity } from "@/store/features/cart/cartSlice";
+import { removeFromCart } from "@/store/features/cart/cartSlice";
+
 import type { RootState } from "@/store/store";
 
-import { getCart } from "@/services/cartService";
 
 import {
   setCart,
@@ -27,6 +33,83 @@ const MyCart = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [updatingItems, setUpdatingItems] = useState<number[]>([]);
+
+  const handleQuantityChange = async (
+  itemId: number,
+  productId: number,
+  currentQuantity: number,
+  change: number
+) => {
+  const newQuantity = currentQuantity + change;
+
+  if (newQuantity < 1 || updatingItems.includes(itemId)) {
+    return;
+  }
+
+  setUpdatingItems((prev) => [...prev, itemId]);
+
+  try {
+    const updatedItem = await updateCartItemQuantity(
+      itemId,
+      newQuantity
+    );
+
+    dispatch(
+      updateQuantity({
+        productId,
+        quantity: updatedItem.quantity,
+      })
+    );
+  } catch (error) {
+    console.error("Failed to update quantity:", error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to update quantity.";
+
+    window.alert(message);
+  } finally {
+    setUpdatingItems((prev) =>
+      prev.filter((id) => id !== itemId)
+    );
+  }
+};
+
+const handleRemoveItem = async (itemId: number) => {
+    if (updatingItems.includes(itemId)) {
+    return;
+    }
+
+    setUpdatingItems((prev) => [...prev, itemId]);
+
+    try {
+    await deleteCartItem(itemId);
+
+
+    dispatch(removeFromCart(itemId));
+
+
+    } catch (error) {
+    console.error("Failed to remove cart item:", error);
+
+
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Failed to remove item from cart."
+    );
+
+
+    } finally {
+    setUpdatingItems((prev) =>
+    prev.filter((id) => id !== itemId)
+    );
+    }
+};
+
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -222,6 +305,7 @@ const MyCart = () => {
                             {/* Remove */}
                             <button
                               type="button"
+                              onClick={() => handleRemoveItem(item.id)}
                               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-500"
                               aria-label={`Remove ${item.name}`}
                             >
@@ -234,7 +318,16 @@ const MyCart = () => {
                             <div className="flex items-center rounded-xl border border-slate-200">
                               <button
                                 type="button"
-                                className="flex h-9 w-9 items-center justify-center text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                                onClick={() =>
+                                  handleQuantityChange(
+                                    item.id,
+                                    item.productId,
+                                    item.quantity,
+                                    -1
+                                  )
+                                }
+                                disabled={item.quantity <= 1 || updatingItems.includes(item.id)}
+                                className="..."
                                 aria-label="Decrease quantity"
                               >
                                 <Minus size={16} />
@@ -244,9 +337,18 @@ const MyCart = () => {
                                 {item.quantity}
                               </span>
 
-                              <button
+                             <button
                                 type="button"
-                                className="flex h-9 w-9 items-center justify-center text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                                onClick={() =>
+                                  handleQuantityChange(
+                                    item.id,
+                                    item.productId,
+                                    item.quantity,
+                                    1
+                                  )
+                                }
+                                disabled={updatingItems.includes(item.id)}
+                                className="..."
                                 aria-label="Increase quantity"
                               >
                                 <Plus size={16} />

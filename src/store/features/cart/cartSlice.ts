@@ -56,8 +56,7 @@ const cartSlice = createSlice({
       action: PayloadAction<number>
     ) => {
       state.items = state.items.filter(
-        (item) =>
-          item.productId !== action.payload
+        (item) => item.id !== action.payload
       );
     },
 
